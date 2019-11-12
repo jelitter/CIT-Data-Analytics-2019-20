@@ -59,23 +59,38 @@ We compare data points with each other.
 
    _Proposed by Macqueen, 1967_.
 
-   Given `K`, Construct a **partition** of a database `D` of `m` objects into `K` clusters.
+   | **DISADVANTAGES:**                                                                  |
+   | :---------------------------------------------------------------------------------- |
+   |                                                                                     |
+   | - Used for **NUMERICAL** attributes. Cannot be used for **CATEGORICAL** attributes. |
+   |                                                                                     |
+   | - **_Caveat_**: Figure out optimal number of clusters (`K`).                        |
+   | - A datapoint can belong only to **1 cluster**.                                     |
+   | - Only finds **local** optimals, and not **global** ones.                           |
+   | - `O (t * k *m *n)`                                                                 |
+   | `t` = number of iterations                                                          |
+   | `k` = number of clusters                                                            |
+   | `m` = number of inputs (datapoints)                                                 |
+   | `n` = number of attributes of each datapoint                                        |
+   |  |
 
-   **`1`**. Randomly choose `K` data points to be the initial cluster centres.
+   Given **`K`**, Construct a **partition** of a database `D` of `m` objects into `K` clusters.
 
-   **`2`**. Assign each data point to the closest cluster centre.
+**`1`**. Randomly choose `K` data points to be the initial cluster centres.
 
-   **`3`**. Re-compute the cluster centres using the current cluster membership.
+**`2`**. Assign each data point to the closest cluster centre.
 
-   **`4`**. If a **_convergence_** criteria is not met, go to `2`.
+**`3`**. Re-compute the cluster centres using the current cluster membership.
 
-   Example for **K = 3**
+**`4`**. If a **_convergence_** criteria is not met, go to `2`.
 
-   `C1` = 2,10
+Example for **K = 3**
 
-   `C2` = 5,8
+`C1` = 2,10
 
-   `C3` = 1,2
+`C2` = 5,8
+
+`C3` = 1,2
 
 |                | c1=(2, 10) | c2=(5, 8) | c3=(1, 2) | cluster assignment |
 | -------------- | :--------: | :-------: | :-------: | :----------------: |
@@ -129,7 +144,6 @@ Calculate new centres:
 | A8(4,9)  | A4(5,8) | A7(1,2) |
 |          | A5(5,8) |         |
 |          | A6(5,8) |         |
-|          |         |         |
 
 When centres do not change, we have **Convergence** and we can finish the algorithm. Not the case yet, so
 
@@ -150,7 +164,6 @@ Calculate new centres:
 | A1(2,10) | A3(8,4) | A2(2,5) |
 | A4(5,8)  | A5(5,8) | A7(1,2) |
 | A8(4,9)  | A6(5,8) |         |
-|          |         |         |
 
 **`3`**. Recompute centres: **Iteration 4:**
 
@@ -163,6 +176,13 @@ Calculate new centres:
 - Centres for Cluster 3 **C3**: `(1.5, 3.5)`
 
 If we re-calculate distances, we see this time that **membership will not change, so the algorithm has converged**.
+
+**Stopping / Convergence Criteria:**
+
+1. **No re-assignments** of data points to different clusters.
+2. No (or minimum) **change of centres**.
+3. Minimum decrease in the **sum of squared errors (`SSE`)**
+   (minimize sum of distances of datapoints to their centers).
 
 ---
 
