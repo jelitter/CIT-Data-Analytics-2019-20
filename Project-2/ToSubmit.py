@@ -6,20 +6,14 @@ Created on Sat Nov 30 11:58:04 2019
 @author: farshadtoosi
 """
 
-from io import StringIO
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 from pandas import read_csv
 from pandas.plotting import scatter_matrix
-from sklearn import linear_model, preprocessing
-from sklearn.cluster import KMeans
+from sklearn import preprocessing
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, classification_report,
-                             confusion_matrix, mean_squared_error)
+                             confusion_matrix)
 from sklearn.model_selection import (StratifiedKFold, cross_val_score,
                                      train_test_split)
 from sklearn.naive_bayes import GaussianNB
@@ -43,6 +37,138 @@ def task1():
 
 def task2():
     """ Task 2 """
+    # am = raw_dataset[['age','marital']]
+    am = dataset[['age', 'marital']]
+
+    plt.figure(figsize=(15, 8))
+
+    # Generate object header for the data points
+    obj_names = []
+    for i in range(1, len(am)+1):
+        obj = "Object " + str(i)
+        obj_names.append(obj)
+
+    # Create a pandas DataFrame with the names and (x, y) coordinates
+    data = pd.DataFrame({
+        'Object': obj_names,
+        'X_value': am['marital'],
+        'Y_value': am['age']
+    })
+
+    # 0 - divorced
+    # 1 - married
+    # 2 - single
+
+    marital_status = am['marital'].unique()
+    marital_status_str = [s.title() for s in raw_dataset['marital'].unique()]
+
+    # Initialize the centroids
+    c1 = (marital_status[0], 50)
+    c2 = (marital_status[1], 50)
+    c3 = (marital_status[2], 50)
+
+    def calculate_distance(centroid, X, Y):
+        distances = []
+
+        # Unpack the x and y coordinates of the centroid
+        c_x, c_y = centroid
+
+        # Iterate over the data points and calculate the distance
+        for x, y in list(zip(X, Y)):
+            root_diff_x = (x - c_x) ** 2
+            root_diff_y = (y - c_y) ** 2
+            distance = np.sqrt(root_diff_x + root_diff_y)
+            distances.append(distance)
+
+        return distances
+
+    # Calculate the distance and assign them to the DataFrame accordingly
+    data['C1_Distance'] = calculate_distance(c1, data.X_value, data.Y_value)
+    data['C2_Distance'] = calculate_distance(c2, data.X_value, data.Y_value)
+    data['C3_Distance'] = calculate_distance(c3, data.X_value, data.Y_value)
+
+    # Get the minimum distance centroids
+    data['Cluster'] = data[['C1_Distance', 'C2_Distance',
+                            'C3_Distance']].apply(np.argmin, axis=1)
+
+    # Map the centroids accordingly and rename them
+    data['Cluster'] = data['Cluster'].map(
+        {'C1_Distance': marital_status_str[0], 'C2_Distance': marital_status_str[1], 'C3_Distance': marital_status_str[2]})
+
+    # Get a preview of the data
+    print("\n🎯 Data points and distances to clusters centers:")
+    print(data.head())
+
+    # Calculate the coordinates of the new centroid from cluster 1
+    x_new_centroid1 = data[data['Cluster'] ==
+                           marital_status_str[0]]['X_value'].mean()
+    y_new_centroid1 = data[data['Cluster'] ==
+                           marital_status_str[0]]['Y_value'].mean()
+
+    # Calculate the coordinates of the new centroid from cluster 2
+    x_new_centroid2 = data[data['Cluster'] ==
+                           marital_status_str[1]]['X_value'].mean()
+    y_new_centroid2 = data[data['Cluster'] ==
+                           marital_status_str[1]]['Y_value'].mean()
+
+    # Calculate the coordinates of the new centroid from cluster 3
+    x_new_centroid3 = data[data['Cluster'] ==
+                           marital_status_str[2]]['X_value'].mean()
+    y_new_centroid3 = data[data['Cluster'] ==
+                           marital_status_str[2]]['Y_value'].mean()
+
+    # Print the coordinates of the new centroids
+    print('\n🎯 Centroid 1 ({}) ({}, {})'.format(
+        marital_status_str[0], x_new_centroid1, y_new_centroid1))
+    print('🎯 Centroid 2 ({}) ({}, {})'.format(
+        marital_status_str[1], x_new_centroid2, y_new_centroid2))
+    print('🎯 Centroid 3 ({}) ({}, {})\n'.format(
+        marital_status_str[2], x_new_centroid3, y_new_centroid3))
+
+    # Specify the number of clusters (3) and fit the data X
+    kmeans = KMeans(n_clusters=3, random_state=0).fit(am)
+
+    # Get the cluster centroids
+    print(kmeans.cluster_centers_)
+
+    # Plotting the cluster centers and the data points on a 2D plane
+
+    sns.set(font_scale=1.6)
+
+    # Scatter plots dataset
+    plt.scatter(am['age'], am['marital'])
+
+    # Scatter plot centroids
+    plt.scatter(kmeans.cluster_centers_[
+                :, 0], am['marital'].unique(), c='red', marker='D', s=150)
+
+    plt.title('Marital Status by Age')
+    plt.xlabel('Age')
+    plt.ylabel('Marital Status')
+    plt.tick_params(labelsize=12, pad=6)
+    plt.yticks(np.arange(3), marital_status_str)
+
+    age1 = kmeans.cluster_centers_[0, 0]
+    age2 = kmeans.cluster_centers_[1, 0]
+    age3 = kmeans.cluster_centers_[2, 0]
+
+    # Annotate centroids' ages
+    plt.annotate(f"{round(age1, 1)} years old",
+                 xy=(age1, marital_status[0]),
+                 xytext=(age1 + 2, marital_status[0] - 0.2),
+                 arrowprops=dict(facecolor='red', shrink=0.01))
+
+    plt.annotate(f"{round(age2, 1)} years old",
+                 xy=(age2, marital_status[1]),
+                 xytext=(age2 + 2, marital_status[1] - 0.2),
+                 arrowprops=dict(facecolor='red', shrink=0.01))
+
+    plt.annotate(f"{round(age3, 1)} years old",
+                 xy=(age3, marital_status[2]),
+                 xytext=(age3 + 2, marital_status[2] + 0.15),
+                 arrowprops=dict(facecolor='red', shrink=0.01))
+
+    plt.show()
 
 
 def task3():
