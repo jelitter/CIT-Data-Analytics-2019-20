@@ -6,10 +6,16 @@ Created on Sat Nov 30 11:58:04 2019
 @author: farshadtoosi
 """
 
+import warnings
+
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from matplotlib import pyplot as plt
 from pandas import read_csv
 from pandas.plotting import scatter_matrix
 from sklearn import preprocessing
+from sklearn.cluster import KMeans
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, classification_report,
@@ -20,6 +26,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+
+warnings.filterwarnings("ignore")
 
 # Note: Not all the libararies above are necessarily needed for this project and not all
 # the libraries you need for this project are necessarily listed above.
@@ -33,6 +41,43 @@ from sklearn.tree import DecisionTreeClassifier
 
 def task1():
     """ Task 1 """
+    def test_accuracy(ds):
+        array = ds.values
+        # 6th column (index 5) is 'y' for Dataset 1, 'loan' for Dataset 2
+        X = array[:, 0:5]
+        Y = array[:, 5]
+        X_train, X_validation, Y_train, Y_validation = train_test_split(
+            X, Y, test_size=1, random_state=1)
+
+        # Tested all these algorithms. LogisticRegression (LR) resulted in the highest accuracy.
+        #   LR: Accuracy: 0.882714 - Error: 0.117286 (Std Dev: 0.000201)
+        #   LDA: Accuracy: 0.882438 - Error: 0.117562 (Std Dev: 0.000389)
+        #   KNN: Accuracy: 0.869857 - Error: 0.130143 (Std Dev: 0.002554)
+        #   CART: Accuracy: 0.818735 - Error: 0.181265 (Std Dev: 0.007136)
+        #   NB: Accuracy: 0.870327 - Error: 0.129673 (Std Dev: 0.001553)
+
+        model = ('LR', LogisticRegression(
+            solver='liblinear', multi_class='ovr'))
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
+        cv_results = cross_val_score(
+            model[1], X_train, Y_train, cv=kfold, scoring='accuracy')
+        print('%s: Accuracy: %f - Error: %f (Std Dev: %f)' %
+              (model[0], cv_results.mean(), (1 - cv_results.mean()), cv_results.std()))
+        return 1 - cv_results.mean()
+
+    # Dataset 1
+    dataset_1 = dataset[['age', 'job', 'poutcome', 'balance', 'default', 'y']]
+    print("\n💽 Dataset 1:")
+    error_1 = test_accuracy(dataset_1)
+
+    # Dataset 2
+    dataset_2 = dataset[['age', 'job',
+                         'poutcome', 'balance', 'default', 'loan']]
+    print("\n💽 Dataset 2:")
+    error_2 = test_accuracy(dataset_2)
+
+    print("\n🔎 Dataset 1" if error_1 < error_2 else "Dataset 2",
+          "has higher accuracy (lower error)")
 
 
 def task2():
